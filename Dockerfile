@@ -10,6 +10,10 @@ COPY . .
 EXPOSE 8000
 
 
-FROM base AS production
-CMD ["bash", "-c", "python uvicorn setup.base:app --host 0.0.0.0 --port 8000"]
+# FROM base AS test
+# CMD ["pytest", "-vv"]
 
+
+FROM base AS production
+# CMD ["bash", "-c", "python uvicorn setup.base:app --host 0.0.0.0 --port 8000"]
+CMD ["uvicorn", "setup.base:app", "--host", "0.0.0.0", "--port", "8000"]

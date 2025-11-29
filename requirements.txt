@@ -2,9 +2,11 @@ FastAPI
 uvicorn[standard]
 SQLAlchemy
 pydantic
-# email-validator
-# alembic
-# psycopg2-binary
-# kafka-python
-# pytest 
-# httpx
+passlib[argon2]
+alembic
+psycopg2-binary
+pwdlib
+argon2-cffi
+pyjwt
+redis
+email-validator

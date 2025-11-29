@@ -1,0 +1,25 @@
+#pip install alembic 
+
+#alembic init alembic
+
+#change alembic env.py:
+    1: import Base:
+        
+        from setup.database_setup import Base
+        from models import users
+        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+        target_metadata = Base.metadata
+        (Adding models is so important)
+    2. import db address:
+        DB_URL = os.getenv("DATABASE_URL")
+        if DB_URL:
+            config.set_main_option("sqlalchemy.url", DB_URL)
+
+#alembic revision --autogenerate -m "message" or alembic revision -m "message"
+
+#alembic upgrade head
+
+
+
+
