@@ -1,0 +1,12 @@
+FastAPI
+uvicorn[standard]
+SQLAlchemy
+pydantic
+passlib[argon2]
+alembic
+psycopg2-binary
+pwdlib
+argon2-cffi
+pyjwt
+redis
+email-validator
