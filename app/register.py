@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from passlib.context import CryptContext
-from models.users import Users, UserCreate
+from models.users import Users
+from pydantic_validation.user_validation import UserCreate
 from starlette.responses import JSONResponse
 from setup.database_setup import get_db
 from sqlalchemy.exc import IntegrityError
