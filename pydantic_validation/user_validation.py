@@ -14,13 +14,12 @@ class UserCreate(BaseModel):
     phone_number: NonEmptyStrPhone | None
 
 
-class UserRead(UserCreate):
+class UserRead(BaseModel):
     id: int
     first_name: str
     last_name: str
     email: EmailStr
     username: str
-    password: str
     phone_number: str | None
 
     model_config = {"from_attributes": True}

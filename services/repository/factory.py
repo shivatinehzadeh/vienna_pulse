@@ -1,4 +1,4 @@
-from .user_repository import UserListRepository, UserRepository
+from .user_repository import  UserRepository
 
 class RepositoryFactory:
 
@@ -6,8 +6,7 @@ class RepositoryFactory:
     def get_repository(name: str, db):
 
         repositories = {
-            "user": UserRepository,
-            "user_list": UserListRepository
+            "user": UserRepository
         }
 
         repo_class = repositories.get(name)
