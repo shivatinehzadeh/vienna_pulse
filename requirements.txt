@@ -10,3 +10,4 @@ argon2-cffi
 pyjwt
 redis
 email-validator
+async_lru

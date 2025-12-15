@@ -7,9 +7,9 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from pydantic_validation.authentication import UserLogin, UserLoginEmail, UserLoginResponse, UserSendOtp, UserVerifyOtp
-from services.authentication_services import auth_validation
-from services.authentication_services.otp_service import send_otp
-from services.authentication_services.token_service import token_creation
+from services.helper import auth_validation
+from services.helper.otp_service import send_otp
+from services.helper.token_service import token_creation
 from services.providers.mock_provider import MockMessageProvider
 from setup import redis_setup
 from enum import Enum

@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 import logging
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from services.authentication import AuthenticationFactory
+from services.factory.authentication import AuthenticationFactory
 from setup.database_setup import get_db
-from services.authentication_services import auth_validation
+from services.helper import auth_validation
 from setup import redis_setup
 from services.providers.mock_provider import MockMessageProvider
 from pydantic_validation.authentication import UserLogin, UserLoginEmail, UserSendOtp, UserVerifyOtp, UserLoginResponse
-from services.authentication_services.token_service import token_creation
-from services.authentication_services.otp_service import send_otp
+from services.helper.token_service import token_creation
+from services.helper.otp_service import send_otp
 from pydantic import ValidationError
 
 
