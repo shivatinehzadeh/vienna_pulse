@@ -26,19 +26,16 @@ async def get_users(db: Session = Depends(get_db)):
 
 
 @router.get("/user/{user_id}", response_model=UserRead)
-@alru_cache(maxsize=120)
 async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     service = get_user_service_cached(method="by_id", db=db, param=user_id)
     return await service.users()
 
 @router.get("/user_by_email/{email}", response_model=UserRead)
-@alru_cache(maxsize=120)
 async def get_user_by_email(email: str, db: Session = Depends(get_db)):
     service = get_user_service_cached(method="by_email", db=db, param=email)
     return await service.users()
 
 @router.get("/user_by_phone/{phone_number}", response_model=UserRead)
-@alru_cache(maxsize=120)
 async def get_user_by_phone(phone_number: str, db: Session = Depends(get_db)):
     service = get_user_service_cached(method="by_phone", db=db, param=phone_number)
     return await service.users()
