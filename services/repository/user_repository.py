@@ -1,3 +1,4 @@
+from enum import Enum
 from models.users import Users
 from typing import Optional
 from services.repository.base import BaseRepository
@@ -11,3 +12,7 @@ class UserRepository(BaseRepository):
     @alru_cache(maxsize=120)
     async def get_all_users(self) -> list[Users]:
         return self.db.query(Users).all()
+
+class InvalidCacheMethod(str, Enum):
+        BY_PARAM = "by_param"
+        ALL_USERS = "all_users"

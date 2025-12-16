@@ -11,3 +11,4 @@ pyjwt
 redis
 email-validator
 async_lru
+cachetools

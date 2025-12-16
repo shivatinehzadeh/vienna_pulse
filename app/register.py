@@ -1,11 +1,14 @@
 from fastapi import APIRouter
 from passlib.context import CryptContext
+from app.users import user_cache
 from models.users import Users
 from pydantic_validation.user_validation import UserCreate
 from starlette.responses import JSONResponse
+from services.repository.factory import RepositoryFactory
 from setup.database_setup import get_db
 from sqlalchemy.exc import IntegrityError
 import logging
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,7 +43,8 @@ def register_user(data: UserCreate):
         db.add(create_user)
         db.commit()
         db.refresh(create_user)
-        
+        # user_repo = RepositoryFactory.get_repository("user", db)
+        user_cache.clear()
         logger.info(f"User registered successfully with username: {data.get('username')}")
         
         if create_user:
