@@ -15,11 +15,11 @@ class FetchUserMethod(str, Enum):
     BY_PHONE = "by_phone"
     BY_EMAIL = "by_email"
     ALL_USERS = "all_users"
+    BY_USERNAME = "by_username"
 
 class Users(ABC):
-    def __init__(self, db, param = None):
+    def __init__(self, param = None):
          self.param = param
-         self.db = db
          
     def log_info(self, message: str):
         logger.info(f"{datetime.datetime.now()}:{self.__class__.__name__}:{message}")
@@ -50,40 +50,48 @@ class Users(ABC):
  
 class UserFactory:
     @staticmethod
-    def get_user_service(method: str, db, param = None):
+    def get_user_service(method: str, param = None):
         if method == FetchUserMethod.BY_ID:
-            return UserByIdService(db, param)
+            return UserByIdService(param)
         elif method == FetchUserMethod.BY_PHONE:
-            return UserByPhoneService(db, param)
+            return UserByPhoneService(param)
         elif method == FetchUserMethod.BY_EMAIL:
-            return UserByEmailService(db, param)
+            return UserByEmailService(param)
+        elif method == FetchUserMethod.BY_USERNAME:
+            return UserByUsernameService(param)
         elif method == FetchUserMethod.ALL_USERS:
-            return AllUsersService(db)
+            return AllUsersService()
         else:
             raise ValueError("Invalid user retrieval method")
           
 class UserByIdService(Users):
     async def _get_users(self):
         self.log_info(f"Fetching user by id: {self.param}")
-        user = await get_user(self.db, "id",self.param)
+        user = await get_user("id",self.param)
         return UserRead.model_validate(user)
     
     
 class UserByPhoneService(Users):
     async def _get_users(self):
         self.log_info(f"Fetching user by phone number: {self.param}")
-        user = await get_user(self.db, "phone_number",self.param)
+        user = await get_user("phone_number",self.param)
         return UserRead.model_validate(user)
     
     
 class UserByEmailService(Users):
     async def _get_users(self):
         self.log_info(f"Fetching user by email: {self.param}")
-        user = await get_user(self.db, "email",self.param)
+        user = await get_user("email",self.param)
+        return UserRead.model_validate(user)
+    
+class UserByUsernameService(Users):
+    async def _get_users(self):
+        self.log_info(f"Fetching user by username: {self.param}")
+        user = await get_user("username",self.param)
         return UserRead.model_validate(user)
     
 class AllUsersService(Users):
     async def _get_users(self):
         self.log_info("Fetching all users")
-        users = await get_user(self.db)
+        users = await get_user()
         return [UserRead.model_validate(user) for user in users]

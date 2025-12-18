@@ -3,7 +3,7 @@ from .user_repository import  UserRepository
 class RepositoryFactory:
 
     @staticmethod
-    def get_repository(name: str, db):
+    def get_repository(name: str):
 
         repositories = {
             "user": UserRepository
@@ -14,7 +14,7 @@ class RepositoryFactory:
         if not repo_class:
             raise ValueError(f"Repository '{name}' not found")
 
-        return repo_class(db)
+        return repo_class()
  
  
 

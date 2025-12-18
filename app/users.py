@@ -2,17 +2,16 @@ import uuid
 from fastapi import APIRouter, Depends
 import logging
 from sqlalchemy.orm import Session
-from pydantic_validation.user_validation import UserCreate, UserRead
+from pydantic_validation.user_validation import UserCreate, UserRead, UserUpdate
 from services.factory.users import UserFactory
 from services.helper.cache_service import user_cache
 from models.users import Users
-from setup.database_setup import get_db
 from functools import lru_cache
 from services.helper import cache_service
 from passlib.context import CryptContext
 from starlette.responses import JSONResponse
 from fastapi import HTTPException, status
-from sqlalchemy.exc import IntegrityError
+from services.repository.factory import RepositoryFactory
 
 router = APIRouter()
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-
+user_repo = RepositoryFactory.get_repository("user")
 
 @lru_cache(maxsize=10)
 def get_user_service_cached(method: str, param = None):
@@ -29,7 +28,7 @@ def get_user_service_cached(method: str, param = None):
 
 
 @router.post("/register")
-def register_user(data: UserCreate,  db: Session = Depends(get_db)):
+async def register_user(data: UserCreate):
     try:
         data = dict(data)
         logger.info(f"Starting user registration process.with data: {data}")
@@ -47,12 +46,7 @@ def register_user(data: UserCreate,  db: Session = Depends(get_db)):
             "password": password,
             "active_status": True,
         }
-        # Create user instance and add to the database
-        create_user = Users(**registeration_info)
-        db.add(create_user)
-        db.commit()
-        db.refresh(create_user)
-
+        create_user = await user_repo.add_user(registeration_info)
         user_cache.clear()
         logger.info(f"User registered successfully with username: {data.get('username')}")
         
@@ -66,13 +60,8 @@ def register_user(data: UserCreate,  db: Session = Depends(get_db)):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={"message": "User registration is failed."},
             )
-    except IntegrityError:
-        db.rollback()
-        logger.error("User registration failed due to integrity error (duplicate entry) for data:(email or username or phone number)")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"message": "User with this info:(email or username or phone number) already exists."},
-        )
+    except HTTPException:
+            raise
     except Exception as e:
         logger.error(f"User registration failed due to an unexpected error: {str(e)}")
         raise HTTPException(
@@ -88,10 +77,8 @@ async def get_users():
     if get_cached_data:
         return get_cached_data 
     logger.info("CACHE MISS (cachetools)")
-    db = next(get_db())
-    service = UserFactory.get_user_service(method=method, db=db)
+    service = UserFactory.get_user_service(method=method)
     result = await service.users()
-    db.close()
     
     # Store in cache
     cache_key = cache_service.get_cache_key(method)
@@ -99,17 +86,58 @@ async def get_users():
     return result
 
 @router.get("/user/{user_id}", response_model=UserRead)
-async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
-    service = get_user_service_cached(method="by_id", db=db, param=user_id)
+async def get_user_by_id(user_id: int):
+    service = get_user_service_cached(method="by_id", param=user_id)
     return await service.users()
 
 @router.get("/user_by_email/{email}", response_model=UserRead)
-async def get_user_by_email(email: str, db: Session = Depends(get_db)):
-    service = get_user_service_cached(method="by_email", db=db, param=email)
+async def get_user_by_email(email: str):
+    service = get_user_service_cached(method="by_email",param=email)
     return await service.users()
 
 @router.get("/user_by_phone/{phone_number}", response_model=UserRead)
-async def get_user_by_phone(phone_number: str, db: Session = Depends(get_db)):
-    service = get_user_service_cached(method="by_phone", db=db, param=phone_number)
+async def get_user_by_phone(phone_number: str):
+    service = get_user_service_cached(method="by_phone", param=phone_number)
     return await service.users()
 
+@router.get("/user_by_username/{username}", response_model=UserRead)
+async def get_user_by_username(username: str):
+    service = get_user_service_cached(method="by_username", param=username)
+    return await service.users()
+
+@router.patch("/user/{user_id}", response_model=UserRead)
+async def update_user(data: UserUpdate, user_id: int):
+    try:
+        data = dict(data)
+        if "password" in data and data["password"] is not None:
+            #remove password from update data
+            data.pop("password")
+            
+        logger.info(f"Starting user update process for user id: {user_id} with data: {data}")
+        
+        user = await user_repo.find_user_by_field("id", str(user_id))
+        if not user:
+            logger.error(f"User with id: {user_id} not found for update.")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "User not found."},
+            )
+        update_data = await user_repo.update_user(data, user_id)
+        if update_data:
+            user_cache.clear()
+        else:
+            logger.error(f"User with id: {user_id} updated is failed.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": "User update failed."},
+            )
+        logger.info(f"User with id: {user_id} updated successfully.")
+        return UserRead.model_validate(user)
+    except HTTPException:
+            raise
+    except Exception as e:
+        logger.error(f"User update failed due to an unexpected error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"message": f"An error occurred: {str(e)}"},
+        )
