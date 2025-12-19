@@ -36,6 +36,8 @@ services:
       - "5432:5432"
     networks:
       - my_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   # kafka-consumer:
   #   build: .
@@ -48,6 +50,7 @@ services:
   #     - my_network
 
   fastapi:
+    container_name: vienna_pulse-fastapi
     build: .
     depends_on:
       - redis
@@ -72,3 +75,6 @@ services:
 networks:
   my_network:
     driver: bridge
+
+volumes:
+  postgres_data:

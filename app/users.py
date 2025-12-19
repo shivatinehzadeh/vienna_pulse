@@ -2,8 +2,9 @@ import uuid
 from fastapi import APIRouter, Depends
 import logging
 from sqlalchemy.orm import Session
-from pydantic_validation.user_validation import UserCreate, UserRead, UserUpdate
+from pydantic_validation.user_validation import PasswordChack, UserCreate, UserRead, UserUpdate
 from services.factory.users import UserFactory
+from services.helper.auth_validation import password_check_validation
 from services.helper.cache_service import user_cache
 from models.users import Users
 from functools import lru_cache
@@ -107,37 +108,11 @@ async def get_user_by_username(username: str):
 
 @router.patch("/user/{user_id}", response_model=UserRead)
 async def update_user(data: UserUpdate, user_id: int):
-    try:
-        data = dict(data)
-        if "password" in data and data["password"] is not None:
-            #remove password from update data
-            data.pop("password")
-            
-        logger.info(f"Starting user update process for user id: {user_id} with data: {data}")
+    data = dict(data)    
+    return await UserFactory.get_user_service(method="update_user",param=data, user_id=user_id).users()
+
+@router.patch("/user/change_password/{user_id}", response_model=UserRead)
+async def change_password(data: PasswordChack, user_id: int):
+    data = dict(data)
+    return await UserFactory.get_user_service(method="change_password",param=data, user_id=user_id).users()
         
-        user = await user_repo.find_user_by_field("id", str(user_id))
-        if not user:
-            logger.error(f"User with id: {user_id} not found for update.")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "User not found."},
-            )
-        update_data = await user_repo.update_user(data, user_id)
-        if update_data:
-            user_cache.clear()
-        else:
-            logger.error(f"User with id: {user_id} updated is failed.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"message": "User update failed."},
-            )
-        logger.info(f"User with id: {user_id} updated successfully.")
-        return UserRead.model_validate(user)
-    except HTTPException:
-            raise
-    except Exception as e:
-        logger.error(f"User update failed due to an unexpected error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"message": f"An error occurred: {str(e)}"},
-        )

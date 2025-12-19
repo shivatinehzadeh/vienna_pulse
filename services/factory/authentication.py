@@ -23,9 +23,8 @@ class AuthMethod(str, Enum):
     AUTHENTICATE_PHONE = "authenticate_phone"
 
 class AuthenticationService(ABC):
-    def __init__(self, input, db):
+    def __init__(self, input):
         self.input = input
-        self.db = db
         
     def log_info(self, message: str):
         logger.info(f"{datetime.datetime.now()}:{self.__class__.__name__}:{message}")
@@ -61,20 +60,20 @@ class AuthenticationService(ABC):
 
 class AuthenticationFactory:
     @staticmethod
-    def get_authentication_service(method: AuthMethod,input, db):
+    def get_authentication_service(method: AuthMethod,input):
         if method == AuthMethod.LOGIN_CREDENTIALS:
-            return LoginCredentialsService(input, db)
+            return LoginCredentialsService(input)
         elif method == AuthMethod.LOGIN_PHONE_OTP:
-            return LoginPhoneOtpService(input, db)
+            return LoginPhoneOtpService(input)
         elif method == AuthMethod.AUTHENTICATE_PHONE:
-            return AuthenticationPhoneService(input, db)
+            return AuthenticationPhoneService(input)
         else:
             raise ValueError("Invalid authentication method")
 
 class LoginCredentialsService(AuthenticationService):
-    def __init__(self, payload, db, user_checker=auth_validation.user_check,
+    def __init__(self, payload, user_checker=auth_validation.user_check,
                  password_checker=auth_validation.password_check_validation, token_creator=token_creation):
-        super().__init__(payload, db)
+        super().__init__(payload)
         self.user_checker = user_checker
         self.password_checker = password_checker
         self.token_creator = token_creator
@@ -85,12 +84,12 @@ class LoginCredentialsService(AuthenticationService):
             data : UserLoginEmail = self.input
             self.log_info("Logging in with email")
             email = data.email
-            user = await self.user_checker({"email":email}, self.db)
+            user = await self.user_checker({"email":email})
         else:
             data : UserLogin = self.input
             self.log_info("Logging in with username")
             username = data.username
-            user = await self.user_checker({"username":username}, self.db)
+            user = await self.user_checker({"username":username})
         
         password_validation = await self.password_checker(data.password, user)
         if not password_validation:
@@ -104,8 +103,8 @@ class LoginCredentialsService(AuthenticationService):
 
 class LoginPhoneOtpService(AuthenticationService):
     
-    def __init__(self, payload, db, otp_sender=send_otp, message_provider=MockMessageProvider()):
-        super().__init__(payload, db)
+    def __init__(self, payload, otp_sender=send_otp, message_provider=MockMessageProvider()):
+        super().__init__(payload)
         self.otp_sender = otp_sender
         self.message_provider = message_provider
         
@@ -120,8 +119,8 @@ class LoginPhoneOtpService(AuthenticationService):
 
 
 class AuthenticationPhoneService(AuthenticationService):
-    def __init__(self, payload, db, user_checker=auth_validation.user_check, token_creator=token_creation):
-        super().__init__(payload, db)
+    def __init__(self, payload, user_checker=auth_validation.user_check, token_creator=token_creation):
+        super().__init__(payload)
         self.user_checker = user_checker
         self.token_creator = token_creator
     
@@ -141,7 +140,7 @@ class AuthenticationPhoneService(AuthenticationService):
             self.log_warning(f"Invalid OTP for phone number: {phone_number}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail={"message":"Invalid OTP"})
         
-        user = await self.user_checker({"phone_number":phone_number}, self.db)
+        user = await self.user_checker({"phone_number":phone_number})
         get_token = await self.token_creator(user.id)
         self.log_info("token is created successfully")
         

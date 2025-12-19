@@ -20,6 +20,6 @@
 
 #alembic upgrade head
 
-
+#docker exec -it {fastapi container name} alembic upgrade head
 
 

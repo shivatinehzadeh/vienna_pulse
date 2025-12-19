@@ -31,3 +31,6 @@ class UserRead(BaseModel):
     phone_number: str | None
 
     model_config = {"from_attributes": True}
+
+class PasswordChack(BaseModel):
+    password: NonEmptyStr

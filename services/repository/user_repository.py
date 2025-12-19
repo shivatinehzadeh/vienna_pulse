@@ -46,6 +46,7 @@ class UserRepository(BaseRepository):
             
     @alru_cache(maxsize=120)
     async def find_user_by_field(self, field_name: str, field_value: str) -> Optional[Users]:
+        logger.warning(f"Finding user by {field_name} with value: {field_value}")
         return self.db.query(Users).filter(getattr(Users, field_name) == field_value).first()
     
     @alru_cache(maxsize=120)

@@ -3,7 +3,6 @@ import logging
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from services.factory.authentication import AuthenticationFactory
-from setup.database_setup import get_db
 from services.helper import auth_validation
 from setup import redis_setup
 from services.providers.mock_provider import MockMessageProvider
@@ -20,20 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/login", response_model=UserLoginResponse)
-async def login_user(payload: UserLogin, db: Session = Depends(get_db)):
+async def login_user(payload: UserLogin):
         payload = payload.model_copy(update={"key": "username"})
-        return await AuthenticationFactory.get_authentication_service(method="login_credentials", input= payload, db=db).authenticate()
+        return await AuthenticationFactory.get_authentication_service(method="login_credentials", input= payload).authenticate()
 
 
 @router.post("/login/email", response_model=UserLoginResponse)
-async def login_with_email(payload:UserLoginEmail, db: Session= Depends(get_db) ):
+async def login_with_email(payload:UserLoginEmail):
         payload = payload.model_copy(update={"key": "email"})
-        return await AuthenticationFactory.get_authentication_service(method="login_credentials", input= payload, db=db).authenticate()
+        return await AuthenticationFactory.get_authentication_service(method="login_credentials", input= payload).authenticate()
 
 @router.post("/login/phone", response_model=UserLoginResponse)
-async def login_with_phone(payload:UserVerifyOtp, db: Session = Depends(get_db)):
-        return await AuthenticationFactory.get_authentication_service(method="authenticate_phone", input= payload, db=db).authenticate()
+async def login_with_phone(payload:UserVerifyOtp):
+        return await AuthenticationFactory.get_authentication_service(method="authenticate_phone", input= payload).authenticate()
     
 @router.post("/login/otp")
-async def login_otp(payload:UserSendOtp, db: Session = Depends(get_db)):
-    return await AuthenticationFactory.get_authentication_service(method="login_phone_otp", input= payload, db=db).authenticate()
+async def login_otp(payload:UserSendOtp):
+    return await AuthenticationFactory.get_authentication_service(method="login_phone_otp", input= payload).authenticate()
